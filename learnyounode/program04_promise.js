@@ -1,14 +1,26 @@
-function lineCount(filename) {
-    return new Promise(function (resolve, reject) {
-      require('fs').readFile(filename, 'utf8', function(err, text) {
-        resolve(text.split('\n').length-1);
-        reject(err);
-    });
-  });
+function denodeify(nodeFunc){
+    var baseArgs = Array.prototype.slice.call(arguments, 1);
+    return function() {
+        var nodeArgs = baseArgs.concat(Array.prototype.slice.call(arguments));
+        return new Promise((resolve, reject) => {
+            nodeArgs.push((error, data) => {
+                if (error) {
+                    reject(error);
+                } else if (arguments.length > 2) {
+                    resolve(Array.prototype.slice.call(arguments, 1));
+                } else {
+                    resolve(data);
+                }
+            });
+            nodeFunc.apply(null, nodeArgs);
+        });
+    }
 }
 
-lineCount(process.argv[2]).then(function (value) {
-    console.log(value);
+var readFile = denodeify(require('fs').readFile);
+
+readFile(process.argv[2], 'utf8').then(function (value) {
+    console.log(value.split('\n').length-1);
 }).catch(function (error) {
     console.log("Error:" + error);
 });
