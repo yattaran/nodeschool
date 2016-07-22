@@ -4,13 +4,25 @@ var through2 = require('through2');
 var zlib = require('zlib');
 
 module.exports = function () {
-    var grouping = through2.obj(
+    var genreOfBooks = { name:"", books: [] };
+    var currentGenreName = "";
+    var grouping = through2(
         function(chunk, enc, callback) {
-            count[chunk.country] = (count[chunk.country] | 0) + 1;
+            if (chunk.length == 0) return callback();
+            var jsonObj = JSON.parse(chunk);
+            if (jsonObj.type == "genre") {
+                if (genreOfBooks.name != "") {
+                    this.push(JSON.stringify(genreOfBooks) + "\n");
+                    genreOfBooks.books = [];
+                }
+                genreOfBooks.name = jsonObj.name;
+            } else if (jsonObj.type == "book") {
+                genreOfBooks.books.push(jsonObj.name);
+            }
             callback();
-        }, 
+        },
         function(callback) {
-            counter = counter.setCounts(count);
+            this.push(JSON.stringify(genreOfBooks) + "\n");
             callback();
         });
     return combine(split(), grouping, zlib.createGzip());
