@@ -2,8 +2,8 @@
 
 var promise = new Promise(function(fulfill, reject) {
     setTimeout(function() {
-        fulfill();
+        fulfill('FULFILLED!');
     }, 300);
 });
 
-promise.then(function(){console.log('FULFILLED!')});
+promise.then(console.log);
